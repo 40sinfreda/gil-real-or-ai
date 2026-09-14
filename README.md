@@ -1,14 +1,12 @@
 # אמיתי או AI — גיל פלד 60
 
-משחק זיהוי: האם התמונה אמיתית או נוצרה ב-AI.
+משחק ציבורי לאורחים: 20 תמונות, שם מלא, תשובה מיידית, וטבלת עשרת הגדולים על המכשיר.
 
-## הפעלה
-פתח את `index.html` בדפדפן, או הפעל GitHub Pages על הענף `main`.
-
+## קישור לשחקנים
 https://40sinfreda.github.io/gil-real-or-ai/
 
-## חוקים
-- כניסה עם שם מלא
-- 20 תמונות (סדר אקראי)
-- אחרי כל בחירה מוצגת תשובה
-- בסוף: ניקוד, מקום בדירוג הכללי, וטבלת 10 הגדולים (localStorage של המכשיר)
+## הפעלת GitHub Pages (חובה פעם אחת)
+1. העלה את התיקיות `photos/` ו-`items/` מהזיפ (או מהתיקייה המקומית) דרך Add file → Upload files.
+2. כנס ל-[Settings → Pages](https://github.com/40sinfreda/gil-real-or-ai/settings/pages).
+3. Source: **GitHub Actions** או Deploy from branch `main` / root.
+4. אחרי דקה-שתיים הקישור למעלה יעבוד.
