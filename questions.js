@@ -1,5 +1,6 @@
-if (!window.GAME_ITEMS || !window.GAME_ITEMS.length) {
-window.GAME_ITEMS = [
+window.GAME_ITEMS = (window.GAME_ITEMS && window.GAME_ITEMS.length)
+  ? window.GAME_ITEMS
+  : [
   {"id":"r1","label":"real","src":"photos/r1.jpg"},
   {"id":"r2","label":"real","src":"photos/r2.jpg"},
   {"id":"r3","label":"real","src":"photos/r3.jpg"},
@@ -21,4 +22,3 @@ window.GAME_ITEMS = [
   {"id":"a9","label":"ai","src":"photos/a9.jpg"},
   {"id":"a10","label":"ai","src":"photos/a10.jpg"}
 ];
-}
