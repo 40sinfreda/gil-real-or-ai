@@ -66,6 +66,26 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
     <button class="primary" id="again" style="margin-top:16px">שחק שוב</button>
   </section>
 </div>
+<script src="items/r1.js"></script>
+<script src="items/r2.js"></script>
+<script src="items/r3.js"></script>
+<script src="items/r4.js"></script>
+<script src="items/r5.js"></script>
+<script src="items/r6.js"></script>
+<script src="items/r7.js"></script>
+<script src="items/r8.js"></script>
+<script src="items/r9.js"></script>
+<script src="items/r10.js"></script>
+<script src="items/a1.js"></script>
+<script src="items/a2.js"></script>
+<script src="items/a3.js"></script>
+<script src="items/a4.js"></script>
+<script src="items/a5.js"></script>
+<script src="items/a6.js"></script>
+<script src="items/a7.js"></script>
+<script src="items/a8.js"></script>
+<script src="items/a9.js"></script>
+<script src="items/a10.js"></script>
 <script src="questions.js"></script>
 <script>
 const KEY='gil-real-ai-board';
@@ -77,7 +97,9 @@ function shuffle(a){const x=a.slice();for(let k=x.length-1;k>0;k--){const j=Math
 document.getElementById('start').onclick=()=>{
   name=document.getElementById('name').value.trim();
   if(name.split(/\s+/).length<2){alert('נא להזין שם מלא (לפחות שתי מילים)');return}
-  items=shuffle(window.GAME_ITEMS).slice(0,TOTAL);
+  const pool=window.GAME_ITEMS||[];
+  if(!pool.length){alert('התמונות עדיין לא עלו. העלה את תיקיית items או photos לריפו.');return}
+  items=shuffle(pool).slice(0,TOTAL);
   i=0;score=0;
   document.getElementById('gate').classList.add('hidden');
   document.getElementById('play').classList.remove('hidden');
