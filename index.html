@@ -40,16 +40,12 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
   <h1>ברוכים הבאים למשחק Real or Ai</h1>
   <section id="gate" class="card">
     <p class="sub" style="margin-bottom:12px">לכבוד יום ההולדת 60 של גיל, נסו לנחש איזה תמונה אמיתית ואיזה לא. יש לכם 20 תמונות ודקה שלמה לנחש.</p>
-    <div class="intro-wrap"><img id="introPhoto" class="intro" alt=""/></div>
+    <div class="intro-wrap"><img id="introPhoto" class="intro" alt="" src="photos/ai/2UG01.jpg"/></div>
     <input id="name" type="text" placeholder="שם מלא" autocomplete="name"/>
     <button class="primary" id="start">התחל</button>
   </section>
   <section id="play" class="card hidden">
-    <div class="bar">
-      <span id="prog"></span>
-      <span id="score"></span>
-      <span id="clock" class="timer"></span>
-    </div>
+    <div class="bar"><span id="prog"></span><span id="score"></span><span id="clock" class="timer"></span></div>
     <img id="photo" class="q" alt="תמונה"/>
     <p>התמונה הזו אמיתית או נוצרה ב-AI?</p>
     <div class="row">
@@ -63,38 +59,15 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
     <div class="stats" id="final"></div>
     <p class="rank" id="place"></p>
     <h3>עשרת הגדולים</h3>
-    <table>
-      <thead><tr><th>#</th><th>שם</th><th>נכונות</th><th>זמן</th></tr></thead>
-      <tbody id="top"></tbody>
-    </table>
+    <table><thead><tr><th>#</th><th>שם</th><th>נכונות</th><th>זמן</th></tr></thead><tbody id="top"></tbody></table>
     <button class="primary" id="again" style="margin-top:16px">שחק שוב</button>
   </section>
 </div>
-<script src="items/r1.js"></script>
-<script src="items/r2.js"></script>
-<script src="items/r3.js"></script>
-<script src="items/r4.js"></script>
-<script src="items/r5.js"></script>
-<script src="items/r6.js"></script>
-<script src="items/r7.js"></script>
-<script src="items/r8.js"></script>
-<script src="items/r9.js"></script>
-<script src="items/r10.js"></script>
-<script src="items/a1.js"></script>
-<script src="items/a2.js"></script>
-<script src="items/a3.js"></script>
-<script src="items/a4.js"></script>
-<script src="items/a5.js"></script>
-<script src="items/a6.js"></script>
-<script src="items/a7.js"></script>
-<script src="items/a8.js"></script>
-<script src="items/a9.js"></script>
-<script src="items/a10.js"></script>
-<script src="questions.js"></script>
+<script src="manifest.js"></script>
 <script>
 (function setIntro(){
   const pool=window.GAME_ITEMS||[];
-  const fixed=pool.find(x=>x.id==='a1' && String(x.src||'').startsWith('data:')) || pool.find(x=>x.label==='ai' && String(x.src||'').startsWith('data:'));
+  const fixed=pool.find(x=>x.id==='a1') || pool.find(x=>x.label==='ai');
   if(fixed && fixed.src) document.getElementById('introPhoto').src=fixed.src;
 })();
 const KEY='gil-real-ai-board-v2';
@@ -113,7 +86,8 @@ document.getElementById('start').onclick=()=>{
   const raw=window.GAME_ITEMS||[];
   const seen={};
   const pool=raw.filter(x=>{
-    if(!x||!x.src||!String(x.src).startsWith('data:')) return false;
+    const s=String(x.src||'');
+    if(!s.startsWith('photos/ai/') && !s.startsWith('photos/real/')) return false;
     if(seen[x.id]) return false;
     seen[x.id]=1;
     return x.label==='real'||x.label==='ai';
