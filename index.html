@@ -12,11 +12,13 @@ html,body{margin:0;height:100%;height:100dvh;overflow:hidden;font-family:Heebo,A
 h1{font-size:clamp(1.05rem,4.2vw,1.45rem);margin:0 0 6px;color:var(--gold);line-height:1.25}
 .sub{opacity:.85;margin:0 0 8px;font-size:.9rem;line-height:1.35}
 .card{background:var(--card);border:1px solid #2a4a66;border-radius:14px;padding:12px;flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
-#end.card{overflow:auto}
+#end.card,#board.card{overflow:auto}
 input,button{font:inherit}
 input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #3a5d7a;background:#0e2233;color:var(--txt);margin:6px 0 10px}
 button{cursor:pointer;border:0;border-radius:12px;padding:12px 16px;font-weight:700}
 .primary{background:var(--gold);color:#1a1204;width:100%}
+.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold);width:100%;margin:0 0 8px}
+.sheet-link{display:block;margin:10px 0 0;color:var(--gold);text-align:center}
 .row{display:flex;gap:10px}
 .row button{flex:1}
 .real{background:#2e6b4f;color:#fff}
@@ -45,9 +47,17 @@ th,td{padding:6px;border-bottom:1px solid #2a4a66;text-align:right}
   <h1>ברוכים הבאים למשחק Real or Ai</h1>
   <section id="gate" class="card">
     <p class="sub">לכבוד יום ההולדת 60 של גיל, נסו לנחש איזה תמונה אמיתית ואיזה לא. יש לכם 20 תמונות ודקה שלמה לנחש.</p>
+    <button type="button" class="ghost" id="openBoard">עשרת הגדולים</button>
     <div class="intro-wrap"><img id="introPhoto" class="intro" alt="" src="photos/ai/2UG01.jpg"/></div>
     <input id="name" type="text" placeholder="שם מלא" autocomplete="name"/>
     <button class="primary" id="start">התחל</button>
+  </section>
+  <section id="board" class="card hidden">
+    <h2>עשרת הגדולים</h2>
+    <p class="rank" id="boardCount"></p>
+    <table><thead><tr><th>#</th><th>שם</th><th>נכונות</th><th>זמן</th></tr></thead><tbody id="previewTop"></tbody></table>
+    <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1qmp6-yMFNBZkp7O2Z6034PAaPL6WUy5YPDtr8zhOq5c/edit" target="_blank" rel="noopener">טבלה מלאה בגוגל שיטס</a>
+    <button class="primary" id="backGate" style="margin-top:12px">חזרה למשחק</button>
   </section>
   <section id="play" class="card hidden">
     <div class="bar"><span id="prog"></span><span id="score"></span><span id="clock" class="timer"></span></div>
@@ -66,11 +76,7 @@ th,td{padding:6px;border-bottom:1px solid #2a4a66;text-align:right}
 </div>
 <script src="manifest.js"></script>
 <script>
-(function(){
-  const pool=window.GAME_ITEMS||[];
-  const fixed=pool.find(x=>x.id==='a1')||pool.find(x=>x.label==='ai');
-  if(fixed&&fixed.src) document.getElementById('introPhoto').src=fixed.src;
-})();
+(function(){const pool=window.GAME_ITEMS||[];const fixed=pool.find(x=>x.id==='a1')||pool.find(x=>x.label==='ai');if(fixed&&fixed.src) document.getElementById('introPhoto').src=fixed.src;})();
 const CACHE_KEY='gil-real-ai-sheet';
 const SHEET_API='https://script.google.com/macros/s/AKfycbwjIK3k7xbA4hAQ_d4PHYUV9cy-p9NQBJvwbOtPlVFb5RP6ep37H2LKTxtBuXdurb7E/exec';
 const LIMIT=60;
@@ -79,14 +85,15 @@ try{cachedBoard=JSON.parse(localStorage.getItem(CACHE_KEY)||'[]')}catch(e){cache
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":"&#39;"}[c]));}
 function fmt(ms){const s=Math.max(0,ms)/1000;const m=Math.floor(s/60);const r=s-m*60;return m?(m+':'+r.toFixed(1).padStart(4,'0')):(r.toFixed(1)+' שנ\u05f3');}
 function sortBoard(b){return b.slice().sort((a,c)=>(c.score-a.score)||((a.ms||9e9)-(c.ms||9e9)));}
+function uniquePlayers(board){const best={};sortBoard(board).forEach(r=>{const k=String(r.name||'').trim();if(!k||best[k])return;best[k]=r;});return sortBoard(Object.keys(best).map(k=>best[k]));}
+function rowsHtml(board){return uniquePlayers(board).slice(0,10).map((r,idx)=>'<tr><td>'+(idx+1)+'</td><td>'+escapeHtml(r.name)+'</td><td>'+r.score+'</td><td>'+fmt(r.ms||0)+'</td></tr>').join('');}
 function paintBoard(board,me){
-  board=sortBoard(board);
+  const players=uniquePlayers(board.concat(me?[me]:[]));
   if(me){
-    let rank=1;
-    for(let k=0;k<board.length;k++){if(board[k].name===me.name&&Number(board[k].score)===me.score&&Number(board[k].ms)===me.ms){rank=k+1;break;}}
-    document.getElementById('place').textContent='המקום שלך: '+rank+' מתוך '+board.length+' משחקים';
+    const rank=Math.max(1, players.findIndex(r=>r.name===me.name)+1);
+    document.getElementById('place').textContent='המקום שלך: '+rank+' מתוך '+players.length+' שחקנים';
   }
-  document.getElementById('top').innerHTML=board.slice(0,10).map((r,idx)=>'<tr><td>'+(idx+1)+'</td><td>'+escapeHtml(r.name)+'</td><td>'+r.score+'</td><td>'+fmt(r.ms||0)+'</td></tr>').join('');
+  document.getElementById('top').innerHTML=rowsHtml(board.concat(me?[me]:[]));
 }
 function pullBoard(){return fetch(SHEET_API+'?action=list').then(r=>r.json()).then(data=>{cachedBoard=data.items||[];try{localStorage.setItem(CACHE_KEY,JSON.stringify(cachedBoard))}catch(e){}return cachedBoard;});}
 pullBoard().catch(()=>{});
@@ -96,17 +103,17 @@ function paintClock(){const left=remaining();const el=document.getElementById('c
 document.getElementById('start').onclick=()=>{
   player=document.getElementById('name').value.trim();
   if(player.split(/\s+/).length<2){alert('נא להזין שם מלא (לפחות שתי מילים)');return;}
-  const raw=window.GAME_ITEMS||[];
-  const seen={};
+  const raw=window.GAME_ITEMS||[];const seen={};
   items=shuffle(raw.filter(x=>{const s=String(x.src||'');if(!s.startsWith('photos/ai/')&&!s.startsWith('photos/real/'))return false;if(seen[x.id])return false;seen[x.id]=1;return x.label==='real'||x.label==='ai';}));
   i=0;score=0;wrong=0;done=false;locked=false;startedAt=Date.now();
   document.getElementById('gate').classList.add('hidden');
   document.getElementById('end').classList.add('hidden');
+  document.getElementById('board').classList.add('hidden');
   document.getElementById('play').classList.remove('hidden');
   clearInterval(tick);tick=setInterval(paintClock,200);paintClock();show();
   pullBoard().catch(()=>{});
 };
-function show(){if(done)return;locked=false;document.getElementById('fb').className='hidden';document.getElementById('btnReal').disabled=false;document.getElementById('btnAi').disabled=false;document.getElementById('prog').textContent=(i+1)+' / '+items.length;document.getElementById('score').textContent='נכון: '+score+' · טעות: '+wrong;document.getElementById('photo').src=items[i].src;}
+function show(){if(done)return;locked=false;document.getElementById('fb').className='hidden';document.getElementById('btnReal').disabled=false;document.getElementById('btnAi').disabled=false;document.getElementById('prog').textContent=(i+1)+' / '+items.length;document.getElementById('score').textContent='נכון: '+score+' \u00b7 טעות: '+wrong;document.getElementById('photo').src=items[i].src;}
 function choose(ans){
   if(locked||done)return;locked=true;
   const ok=ans===items[i].label;if(ok)score++;else wrong++;
@@ -115,7 +122,7 @@ function choose(ans){
   fb.textContent=ok?('נכון! זו תמונה '+truth):('לא. זו תמונה '+truth);
   fb.classList.remove('hidden');
   document.getElementById('btnReal').disabled=true;document.getElementById('btnAi').disabled=true;
-  document.getElementById('score').textContent='נכון: '+score+' · טעות: '+wrong;
+  document.getElementById('score').textContent='נכון: '+score+' \u00b7 טעות: '+wrong;
   setTimeout(()=>{if(done)return;i++;if(i>=items.length||remaining()<=0)finish(remaining()<=0);else show();},450);
 }
 document.getElementById('btnReal').onclick=()=>choose('real');
@@ -128,12 +135,23 @@ function finish(timeout){
   document.getElementById('end').classList.remove('hidden');
   document.getElementById('final').innerHTML='<strong>'+escapeHtml(player)+'</strong><br>ניחש נכון: <strong>'+score+'</strong><br>טעה: <strong>'+wrong+'</strong>'+(unanswered?('<br>לא הספיק: '+unanswered):'')+'<br>זמן: <strong>'+fmt(elapsedMs)+'</strong>'+(timeout?' (נגמר הזמן)':'');
   const me={name:player,score:score,wrong:wrong,ms:elapsedMs};
-  const instant=cachedBoard.concat([me]);
-  paintBoard(instant,me);
+  paintBoard(cachedBoard,me);
   const q=new URLSearchParams({action:'add',name:player,score:String(score),wrong:String(wrong),ms:String(elapsedMs)});
-  fetch(SHEET_API+'?'+q.toString()).then(r=>r.json()).then(data=>{cachedBoard=data.items||instant;try{localStorage.setItem(CACHE_KEY,JSON.stringify(cachedBoard))}catch(e){}paintBoard(cachedBoard,me);}).catch(()=>{});
+  fetch(SHEET_API+'?'+q.toString()).then(r=>r.json()).then(data=>{cachedBoard=data.items||cachedBoard.concat([me]);try{localStorage.setItem(CACHE_KEY,JSON.stringify(cachedBoard))}catch(e){}paintBoard(cachedBoard,me);}).catch(()=>{});
 }
-document.getElementById('again').onclick=()=>{document.getElementById('end').classList.add('hidden');document.getElementById('gate').classList.remove('hidden');document.getElementById('name').value=player;};
+document.getElementById('again').onclick=()=>{document.getElementById('end').classList.add('hidden');document.getElementById('board').classList.add('hidden');document.getElementById('gate').classList.remove('hidden');document.getElementById('name').value=player;};
+function showPreview(){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('end').classList.add('hidden');
+  document.getElementById('play').classList.add('hidden');
+  document.getElementById('board').classList.remove('hidden');
+  const p=uniquePlayers(cachedBoard);
+  document.getElementById('boardCount').textContent=p.length+' שחקנים';
+  document.getElementById('previewTop').innerHTML=rowsHtml(cachedBoard);
+  pullBoard().then(()=>{const q=uniquePlayers(cachedBoard);document.getElementById('boardCount').textContent=q.length+' שחקנים';document.getElementById('previewTop').innerHTML=rowsHtml(cachedBoard);}).catch(()=>{});
+}
+document.getElementById('openBoard').onclick=showPreview;
+document.getElementById('backGate').onclick=()=>{document.getElementById('board').classList.add('hidden');document.getElementById('gate').classList.remove('hidden');};
 </script>
 </body>
 </html>
