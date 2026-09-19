@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>אמיתי או AI — גיל פלד 60</title>
+<title>ברוכים הבאים למשחק Real or Ai</title>
 <style>
 :root{--bg:#0b1c2c;--card:#13283c;--gold:#e8c36a;--ok:#3dcc8b;--bad:#e05a5a;--txt:#f4efe6}
 *{box-sizing:border-box}
@@ -20,7 +20,8 @@ button{cursor:pointer;border:0;border-radius:12px;padding:12px 18px;font-weight:
 .row button{flex:1}
 .real{background:#2e6b4f;color:#fff}
 .ai{background:#6b3a3a;color:#fff}
-img.q{width:100%;max-height:48vh;object-fit:contain;background:#061018;border-radius:12px;margin:12px 0}
+img.q,img.intro{width:100%;max-height:48vh;object-fit:contain;background:#061018;border-radius:12px;margin:12px 0}
+.intro-wrap{margin:4px 0 16px}
 .bar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.95rem;margin-bottom:8px}
 .timer{font-weight:800;color:var(--gold)}
 .timer.low{color:var(--bad)}
@@ -36,12 +37,14 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
 </head>
 <body>
 <div class="wrap">
-  <h1>אמיתי או AI?</h1>
-  <p class="sub">יום הולדת 60 לגיל פלד · 10 אמיתיות + 10 AI · דקה אחת</p>
+  <h1>ברוכים הבאים למשחק Real or Ai</h1>
   <section id="gate" class="card">
-    <p>הכנס שם מלא כדי להתחיל. יש לך 60 שניות ל-20 תמונות. הסדר מתחלף בכל משחק.</p>
-    <input id="name" type="text" placeholder="שם פרטי ושם משפחה" autocomplete="name"/>
-    <button class="primary" id="start">התחל משחק</button>
+    <p class="sub" style="margin-bottom:12px">לכבוד יום ההולדת 60 של גיל, נסו לנחש איזה תמונה אמיתית ואיזה לא. יש לכם 20 תמונות ודקה שלמה לנחש.</p>
+    <div class="intro-wrap">
+      <img id="introPhoto" class="intro" alt="תמונת דוגמה" src="photos/a1.jpg"/>
+    </div>
+    <input id="name" type="text" placeholder="שם מלא" autocomplete="name"/>
+    <button class="primary" id="start">התחל</button>
   </section>
   <section id="play" class="card hidden">
     <div class="bar">
@@ -92,6 +95,11 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
 <script src="items/a10.js"></script>
 <script src="questions.js"></script>
 <script>
+(function setIntro(){
+  const pool=window.GAME_ITEMS||[];
+  const fixed=pool.find(x=>x.id==='a1') || pool.find(x=>x.label==='ai');
+  if(fixed && fixed.src) document.getElementById('introPhoto').src=fixed.src;
+})();
 const KEY='gil-real-ai-board-v2';
 const LIMIT=60;
 let player='', items=[], i=0, score=0, wrong=0, locked=false;
@@ -104,7 +112,7 @@ function remaining(){return Math.max(0, LIMIT*1000 - (Date.now()-startedAt));}
 function paintClock(){const left=remaining();const el=document.getElementById('clock');el.textContent='\u05e0\u05d5\u05ea\u05e8\u05d5 '+Math.ceil(left/1000)+' \u05e9\u05e0\u05f3';el.classList.toggle('low', left<=10000);if(left<=0 && !done) finish(true);}
 document.getElementById('start').onclick=()=>{
   player=document.getElementById('name').value.trim();
-  if(player.split(/\s+/).length<2){alert('\u05e0\u05d0 \u05dc\u05d4\u05d6\u05d9\u05df \u05e9\u05dd \u05de\u05dc\u05d0 (\u05dc\u05e4\u05d7\u05d5\u05ea \u05e9\u05ea\u05d9 \u05de\u05d9\u05dc\u05d9\u05dd)');return}
+  if(player.split(/\s+/).length<2){alert('\u05e0\u05d0 \u05dcהזין שם מלא (לפחות שתי מילים)');return}
   const pool=window.GAME_ITEMS||[];
   items=shuffle(pool);
   i=0;score=0;wrong=0;done=false;locked=false;
@@ -125,7 +133,7 @@ function show(){
   document.getElementById('btnReal').disabled=false;
   document.getElementById('btnAi').disabled=false;
   document.getElementById('prog').textContent=(i+1)+' / '+items.length;
-  document.getElementById('score').textContent='\u05e0\u05db\u05d5\u05df: '+score+' \u00b7 \u05d8\u05e2\u05d5\u05ea: '+wrong;
+  document.getElementById('score').textContent='נכון: '+score+' · טעות: '+wrong;
   document.getElementById('photo').src=items[i].src;
 }
 function choose(ans){
@@ -135,12 +143,12 @@ function choose(ans){
   if(ok)score++; else wrong++;
   const fb=document.getElementById('fb');
   fb.className='fb '+(ok?'ok':'no');
-  const truth=items[i].label==='real'?'\u05d0\u05de\u05d9\u05ea\u05d9\u05ea':'AI';
-  fb.textContent=ok?('\u05e0\u05db\u05d5\u05df! \u05d6\u05d5 \u05ea\u05de\u05d5\u05e0\u05d4 '+truth):('\u05dc\u05d0. \u05d6\u05d5 \u05ea\u05de\u05d5\u05e0\u05d4 '+truth);
+  const truth=items[i].label==='real'?'אמיתית':'AI';
+  fb.textContent=ok?('נכון! זו תמונה '+truth):('לא. זו תמונה '+truth);
   fb.classList.remove('hidden');
   document.getElementById('btnReal').disabled=true;
   document.getElementById('btnAi').disabled=true;
-  document.getElementById('score').textContent='\u05e0\u05db\u05d5\u05df: '+score+' \u00b7 \u05d8\u05e2\u05d5\u05ea: '+wrong;
+  document.getElementById('score').textContent='נכון: '+score+' · טעות: '+wrong;
   document.getElementById('next').classList.remove('hidden');
 }
 document.getElementById('btnReal').onclick=()=>choose('real');
@@ -161,8 +169,8 @@ function finish(timeout){
   saveBoard(board);
   let rank=1;
   for(let k=0;k<board.length;k++){if(board[k].t===entry.t && board[k].name===player){rank=k+1;break}}
-  document.getElementById('final').innerHTML='<strong>'+escapeHtml(player)+'</strong><br>\u05e0\u05d9\u05d7\u05e9 \u05e0\u05db\u05d5\u05df: <strong>'+score+'</strong><br>\u05d8\u05e2\u05d4: <strong>'+wrong+'</strong>'+(unanswered? ('<br>\u05dc\u05d0 \u05d4\u05e1\u05e4\u05d9\u05e7: '+unanswered):'')+'<br>\u05d6\u05de\u05df: <strong>'+fmt(elapsedMs)+'</strong>'+(timeout?' (\u05e0\u05d2\u05de\u05e8 \u05d4\u05d6\u05de\u05df)':'');
-  document.getElementById('place').textContent='\u05d4\u05de\u05e7\u05d5\u05dd \u05e9\u05dc\u05da: '+rank+' \u05de\u05ea\u05d5\u05da '+board.length+' \u05de\u05e9\u05d7\u05e7\u05d9\u05dd';
+  document.getElementById('final').innerHTML='<strong>'+escapeHtml(player)+'</strong><br>ניחש נכון: <strong>'+score+'</strong><br>טעה: <strong>'+wrong+'</strong>'+(unanswered? ('<br>לא הספיק: '+unanswered):'')+'<br>זמן: <strong>'+fmt(elapsedMs)+'</strong>'+(timeout?' (נגמר הזמן)':'');
+  document.getElementById('place').textContent='המקום שלך: '+rank+' מתוך '+board.length+' משחקים';
   document.getElementById('top').innerHTML=board.slice(0,10).map((r,idx)=>'<tr><td>'+(idx+1)+'</td><td>'+escapeHtml(r.name)+'</td><td>'+r.score+'</td><td>'+fmt(r.ms||0)+'</td></tr>').join('');
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]))}
