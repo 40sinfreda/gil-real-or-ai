@@ -20,30 +20,35 @@ button{cursor:pointer;border:0;border-radius:12px;padding:12px 18px;font-weight:
 .row button{flex:1}
 .real{background:#2e6b4f;color:#fff}
 .ai{background:#6b3a3a;color:#fff}
-img.q{width:100%;max-height:52vh;object-fit:contain;background:#061018;border-radius:12px;margin:12px 0}
-.bar{display:flex;justify-content:space-between;opacity:.85;font-size:.95rem;margin-bottom:8px}
+img.q{width:100%;max-height:48vh;object-fit:contain;background:#061018;border-radius:12px;margin:12px 0}
+.bar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.95rem;margin-bottom:8px}
+.timer{font-weight:800;color:var(--gold)}
+.timer.low{color:var(--bad)}
 .fb{margin:12px 0;padding:12px;border-radius:10px;font-weight:700}
 .ok{background:#1c3d30;color:var(--ok)}
 .no{background:#3d1c1c;color:#ffb3b3}
 table{width:100%;border-collapse:collapse}
 th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
-.rank{font-size:1.2rem;color:var(--gold);margin:12px 0}
+.rank{font-size:1.15rem;color:var(--gold);margin:12px 0}
+.stats{line-height:1.7}
 .hidden{display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>אמיתי או AI?</h1>
-  <p class="sub">יום הולדת 60 לגיל פלד · 20 תמונות</p>
-
+  <p class="sub">יום הולדת 60 לגיל פלד · 10 אמיתיות + 10 AI · דקה אחת</p>
   <section id="gate" class="card">
-    <p>הכנס שם מלא כדי להתחיל.</p>
+    <p>הכנס שם מלא כדי להתחיל. יש לך 60 שניות ל-20 תמונות. הסדר מתחלף בכל משחק.</p>
     <input id="name" type="text" placeholder="שם פרטי ושם משפחה" autocomplete="name"/>
-    <button class="primary" id="start">כניסה למשחק</button>
+    <button class="primary" id="start">התחל משחק</button>
   </section>
-
   <section id="play" class="card hidden">
-    <div class="bar"><span id="prog"></span><span id="score"></span></div>
+    <div class="bar">
+      <span id="prog"></span>
+      <span id="score"></span>
+      <span id="clock" class="timer"></span>
+    </div>
     <img id="photo" class="q" alt="תמונה"/>
     <p>התמונה הזו אמיתית או נוצרה ב-AI?</p>
     <div class="row">
@@ -53,14 +58,13 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
     <div id="fb" class="hidden"></div>
     <button class="primary hidden" id="next" style="margin-top:12px">הבא</button>
   </section>
-
   <section id="end" class="card hidden">
     <h2>התוצאה</h2>
-    <p id="final"></p>
+    <div class="stats" id="final"></div>
     <p class="rank" id="place"></p>
     <h3>עשרת הגדולים</h3>
     <table>
-      <thead><tr><th>#</th><th>שם</th><th>ניקוד</th></tr></thead>
+      <thead><tr><th>#</th><th>שם</th><th>נכונות</th><th>זמן</th></tr></thead>
       <tbody id="top"></tbody>
     </table>
     <button class="primary" id="again" style="margin-top:16px">שחק שוב</button>
@@ -88,74 +92,81 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
 <script src="items/a10.js"></script>
 <script src="questions.js"></script>
 <script>
-const KEY='gil-real-ai-board';
-const TOTAL=20;
-let name='', items=[], i=0, score=0, locked=false;
+const KEY='gil-real-ai-board-v2';
+const LIMIT=60;
+let player='', items=[], i=0, score=0, wrong=0, locked=false;
+let startedAt=0, elapsedMs=0, tick=null, done=false;
 function loadBoard(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
 function saveBoard(b){localStorage.setItem(KEY,JSON.stringify(b))}
 function shuffle(a){const x=a.slice();for(let k=x.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[x[k],x[j]]=[x[j],x[k]]}return x;}
+function fmt(ms){const s=Math.max(0,ms)/1000;const m=Math.floor(s/60);const r=(s-m*60);return m? (m+':' + r.toFixed(1).padStart(4,'0')) : (r.toFixed(1)+' \u05e9\u05e0\u05f3');}
+function remaining(){return Math.max(0, LIMIT*1000 - (Date.now()-startedAt));}
+function paintClock(){const left=remaining();const el=document.getElementById('clock');el.textContent='\u05e0\u05d5\u05ea\u05e8\u05d5 '+Math.ceil(left/1000)+' \u05e9\u05e0\u05f3';el.classList.toggle('low', left<=10000);if(left<=0 && !done) finish(true);}
 document.getElementById('start').onclick=()=>{
-  name=document.getElementById('name').value.trim();
-  if(name.split(/\s+/).length<2){alert('נא להזין שם מלא (לפחות שתי מילים)');return}
+  player=document.getElementById('name').value.trim();
+  if(player.split(/\s+/).length<2){alert('\u05e0\u05d0 \u05dc\u05d4\u05d6\u05d9\u05df \u05e9\u05dd \u05de\u05dc\u05d0 (\u05dc\u05e4\u05d7\u05d5\u05ea \u05e9\u05ea\u05d9 \u05de\u05d9\u05dc\u05d9\u05dd)');return}
   const pool=window.GAME_ITEMS||[];
-  if(!pool.length){alert('התמונות עדיין לא עלו. העלה את תיקיית items או photos לריפו.');return}
-  items=shuffle(pool).slice(0,TOTAL);
-  i=0;score=0;
+  items=shuffle(pool);
+  i=0;score=0;wrong=0;done=false;locked=false;
+  startedAt=Date.now();
   document.getElementById('gate').classList.add('hidden');
+  document.getElementById('end').classList.add('hidden');
   document.getElementById('play').classList.remove('hidden');
+  clearInterval(tick);
+  tick=setInterval(paintClock,200);
+  paintClock();
   show();
 };
 function show(){
+  if(done)return;
   locked=false;
   document.getElementById('fb').className='hidden';
   document.getElementById('next').classList.add('hidden');
   document.getElementById('btnReal').disabled=false;
   document.getElementById('btnAi').disabled=false;
   document.getElementById('prog').textContent=(i+1)+' / '+items.length;
-  document.getElementById('score').textContent='ניקוד: '+score;
+  document.getElementById('score').textContent='\u05e0\u05db\u05d5\u05df: '+score+' \u00b7 \u05d8\u05e2\u05d5\u05ea: '+wrong;
   document.getElementById('photo').src=items[i].src;
 }
 function choose(ans){
-  if(locked)return;
+  if(locked||done)return;
   locked=true;
   const ok=ans===items[i].label;
-  if(ok)score++;
+  if(ok)score++; else wrong++;
   const fb=document.getElementById('fb');
   fb.className='fb '+(ok?'ok':'no');
-  const truth=items[i].label==='real'?'אמיתית':'AI';
-  fb.textContent=ok?('נכון! זו תמונה '+truth):('לא. זו תמונה '+truth);
+  const truth=items[i].label==='real'?'\u05d0\u05de\u05d9\u05ea\u05d9\u05ea':'AI';
+  fb.textContent=ok?('\u05e0\u05db\u05d5\u05df! \u05d6\u05d5 \u05ea\u05de\u05d5\u05e0\u05d4 '+truth):('\u05dc\u05d0. \u05d6\u05d5 \u05ea\u05de\u05d5\u05e0\u05d4 '+truth);
   fb.classList.remove('hidden');
   document.getElementById('btnReal').disabled=true;
   document.getElementById('btnAi').disabled=true;
-  document.getElementById('score').textContent='ניקוד: '+score;
+  document.getElementById('score').textContent='\u05e0\u05db\u05d5\u05df: '+score+' \u00b7 \u05d8\u05e2\u05d5\u05ea: '+wrong;
   document.getElementById('next').classList.remove('hidden');
 }
 document.getElementById('btnReal').onclick=()=>choose('real');
 document.getElementById('btnAi').onclick=()=>choose('ai');
-document.getElementById('next').onclick=()=>{i++; if(i>=items.length) finish(); else show();};
-function finish(){
+document.getElementById('next').onclick=()=>{if(done)return;i++;if(i>=items.length || remaining()<=0) finish(remaining()<=0); else show();};
+function finish(timeout){
+  if(done)return;
+  done=true;
+  clearInterval(tick);
+  elapsedMs=Math.min(LIMIT*1000, Date.now()-startedAt);
+  const unanswered=Math.max(0, items.length-(score+wrong));
   document.getElementById('play').classList.add('hidden');
   document.getElementById('end').classList.remove('hidden');
   const board=loadBoard();
-  board.push({name,score,t:Date.now()});
-  board.sort((a,b)=>b.score-a.score||a.t-b.t);
+  const entry={name:player,score,wrong,unanswered,ms:elapsedMs,t:Date.now(),timeout:!!timeout};
+  board.push(entry);
+  board.sort((a,b)=> (b.score-a.score) || ((a.ms||9e9)-(b.ms||9e9)) || (a.t-b.t));
   saveBoard(board);
-  const myLast=board.filter(x=>x.name===name&&x.score===score).pop();
   let rank=1;
-  for(let k=0;k<board.length;k++){
-    if(board[k].name===name && board[k].score===score && board[k].t===myLast.t){rank=k+1;break}
-  }
-  document.getElementById('final').textContent=name+' · '+score+' מתוך '+items.length;
-  document.getElementById('place').textContent='המקום שלך בדירוג הכללי: '+rank+' מתוך '+board.length+' משחקים';
-  const top=board.slice(0,10);
-  document.getElementById('top').innerHTML=top.map((r,idx)=>'<tr><td>'+(idx+1)+'</td><td>'+escapeHtml(r.name)+'</td><td>'+r.score+'</td></tr>').join('');
+  for(let k=0;k<board.length;k++){if(board[k].t===entry.t && board[k].name===player){rank=k+1;break}}
+  document.getElementById('final').innerHTML='<strong>'+escapeHtml(player)+'</strong><br>\u05e0\u05d9\u05d7\u05e9 \u05e0\u05db\u05d5\u05df: <strong>'+score+'</strong><br>\u05d8\u05e2\u05d4: <strong>'+wrong+'</strong>'+(unanswered? ('<br>\u05dc\u05d0 \u05d4\u05e1\u05e4\u05d9\u05e7: '+unanswered):'')+'<br>\u05d6\u05de\u05df: <strong>'+fmt(elapsedMs)+'</strong>'+(timeout?' (\u05e0\u05d2\u05de\u05e8 \u05d4\u05d6\u05de\u05df)':'');
+  document.getElementById('place').textContent='\u05d4\u05de\u05e7\u05d5\u05dd \u05e9\u05dc\u05da: '+rank+' \u05de\u05ea\u05d5\u05da '+board.length+' \u05de\u05e9\u05d7\u05e7\u05d9\u05dd';
+  document.getElementById('top').innerHTML=board.slice(0,10).map((r,idx)=>'<tr><td>'+(idx+1)+'</td><td>'+escapeHtml(r.name)+'</td><td>'+r.score+'</td><td>'+fmt(r.ms||0)+'</td></tr>').join('');
 }
-function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]))}
-document.getElementById('again').onclick=()=>{
-  document.getElementById('end').classList.add('hidden');
-  document.getElementById('gate').classList.remove('hidden');
-  document.getElementById('name').value=name;
-};
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]))}
+document.getElementById('again').onclick=()=>{document.getElementById('end').classList.add('hidden');document.getElementById('gate').classList.remove('hidden');document.getElementById('name').value=player;};
 </script>
 </body>
 </html>
