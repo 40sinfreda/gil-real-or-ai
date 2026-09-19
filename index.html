@@ -40,9 +40,7 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
   <h1>ברוכים הבאים למשחק Real or Ai</h1>
   <section id="gate" class="card">
     <p class="sub" style="margin-bottom:12px">לכבוד יום ההולדת 60 של גיל, נסו לנחש איזה תמונה אמיתית ואיזה לא. יש לכם 20 תמונות ודקה שלמה לנחש.</p>
-    <div class="intro-wrap">
-      <img id="introPhoto" class="intro" alt="" />
-    </div>
+    <div class="intro-wrap"><img id="introPhoto" class="intro" alt=""/></div>
     <input id="name" type="text" placeholder="שם מלא" autocomplete="name"/>
     <button class="primary" id="start">התחל</button>
   </section>
@@ -59,7 +57,6 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
       <button class="ai" id="btnAi">AI</button>
     </div>
     <div id="fb" class="hidden"></div>
-    <button class="primary hidden" id="next" style="margin-top:12px">הבא</button>
   </section>
   <section id="end" class="card hidden">
     <h2>התוצאה</h2>
@@ -97,7 +94,7 @@ th,td{padding:8px;border-bottom:1px solid #2a4a66;text-align:right}
 <script>
 (function setIntro(){
   const pool=window.GAME_ITEMS||[];
-  const fixed=pool.find(x=>x.id==='a1' && String(x.src).startsWith('data:')) || pool.find(x=>x.label==='ai' && String(x.src||'').startsWith('data:'));
+  const fixed=pool.find(x=>x.id==='a1' && String(x.src||'').startsWith('data:')) || pool.find(x=>x.label==='ai' && String(x.src||'').startsWith('data:'));
   if(fixed && fixed.src) document.getElementById('introPhoto').src=fixed.src;
 })();
 const KEY='gil-real-ai-board-v2';
@@ -136,7 +133,6 @@ function show(){
   if(done)return;
   locked=false;
   document.getElementById('fb').className='hidden';
-  document.getElementById('next').classList.add('hidden');
   document.getElementById('btnReal').disabled=false;
   document.getElementById('btnAi').disabled=false;
   document.getElementById('prog').textContent=(i+1)+' / '+items.length;
@@ -156,11 +152,15 @@ function choose(ans){
   document.getElementById('btnReal').disabled=true;
   document.getElementById('btnAi').disabled=true;
   document.getElementById('score').textContent='\u05e0\u05db\u05d5\u05df: '+score+' \u00b7 \u05d8\u05e2\u05d5\u05ea: '+wrong;
-  document.getElementById('next').classList.remove('hidden');
+  setTimeout(function(){
+    if(done)return;
+    i++;
+    if(i>=items.length || remaining()<=0) finish(remaining()<=0);
+    else show();
+  }, 450);
 }
-document.getElementById('btnReal').onclick=()=>choose('real');
-document.getElementById('btnAi').onclick=()=>choose('ai');
-document.getElementById('next').onclick=()=>{if(done)return;i++;if(i>=items.length || remaining()<=0) finish(remaining()<=0); else show();};
+document.getElementById('btnReal').onclick=function(){choose('real');};
+document.getElementById('btnAi').onclick=function(){choose('ai');};
 function finish(timeout){
   if(done)return;
   done=true;
@@ -181,7 +181,7 @@ function finish(timeout){
   document.getElementById('top').innerHTML=board.slice(0,10).map((r,idx)=>'<tr><td>'+(idx+1)+'</td><td>'+escapeHtml(r.name)+'</td><td>'+r.score+'</td><td>'+fmt(r.ms||0)+'</td></tr>').join('');
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]))}
-document.getElementById('again').onclick=()=>{document.getElementById('end').classList.add('hidden');document.getElementById('gate').classList.remove('hidden');document.getElementById('name').value=player;};
+document.getElementById('again').onclick=function(){document.getElementById('end').classList.add('hidden');document.getElementById('gate').classList.remove('hidden');document.getElementById('name').value=player;};
 </script>
 </body>
 </html>
