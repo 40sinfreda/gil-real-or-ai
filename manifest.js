@@ -1,0 +1,22 @@
+window.GAME_ITEMS = [
+  {id:"r1",label:"real",src:"photos/real/412310016_10161353104972698_7517746807347220373_n.jpg"},
+  {id:"r2",label:"real",src:"photos/real/505244082_4033505756865094_8416653902457979384_n.jpg"},
+  {id:"r3",label:"real",src:"photos/real/Screenshot_20250328_132500_WhatsAppBusiness.jpg"},
+  {id:"r4",label:"real",src:"photos/real/WhatsApp%20Image%202026-09-02%20at%2015.42.31%20(1).jpeg"},
+  {id:"r5",label:"real",src:"photos/real/WhatsApp%20Image%202026-09-02%20at%2015.45.53.jpeg"},
+  {id:"r6",label:"real",src:"photos/real/WhatsApp%20Image%202026-09-04%20at%2016.32.08.jpeg"},
+  {id:"r7",label:"real",src:"photos/real/WhatsApp%20Image%202026-09-04%20at%2016.32.09.jpeg"},
+  {id:"r8",label:"real",src:"photos/real/WhatsApp%20Image%202026-09-04%20at%2016.32.092.jpeg"},
+  {id:"r9",label:"real",src:"photos/real/WhatsApp%20Image%202026-09-11%20at%2008.01.36%20(2).jpeg"},
+  {id:"r10",label:"real",src:"photos/real/WhatsApp%20Image%202026-09-11%20at%2008.12.10%20(1).jpeg"},
+  {id:"a1",label:"ai",src:"photos/ai/2UG01.jpg"},
+  {id:"a2",label:"ai",src:"photos/ai/JqhUp.jpg"},
+  {id:"a3",label:"ai",src:"photos/ai/RC54H%20(1).jpg"},
+  {id:"a4",label:"ai",src:"photos/ai/RdsAu.jpg"},
+  {id:"a5",label:"ai",src:"photos/ai/XaFyy.jpg"},
+  {id:"a6",label:"ai",src:"photos/ai/cFbvC.jpg"},
+  {id:"a7",label:"ai",src:"photos/ai/lcQYw%20(1).jpg"},
+  {id:"a8",label:"ai",src:"photos/ai/lgfjv.jpg"},
+  {id:"a9",label:"ai",src:"photos/ai/pJVuR.jpg"},
+  {id:"a10",label:"ai",src:"photos/ai/v6tq6.jpg"}
+];
